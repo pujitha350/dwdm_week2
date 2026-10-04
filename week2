@@ -1,0 +1,100 @@
+import weka.associations.Apriori;
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Discretize;
+import weka.filters.unsupervised.instance.Resample;
+
+public class AssociationMining {
+
+    public static void main(String[] args) throws Exception {
+
+        // ---------------- WEATHER DATASET ----------------
+        System.out.println("===== WEATHER DATASET =====");
+
+        Instances weather = loadDataset("weather.nominal.arff");
+
+        Apriori apriori1 = new Apriori();
+        apriori1.setLowerBoundMinSupport(0.2);
+        apriori1.setMinMetric(0.8);
+        apriori1.setNumRules(10);
+
+        apriori1.buildAssociations(weather);
+
+        System.out.println(apriori1);
+
+
+        // ---------------- IRIS DATASET ----------------
+        System.out.println("===== IRIS DATASET =====");
+
+        Instances iris = loadDataset("iris.arff");
+
+        // Discretization
+        Discretize discretizeIris = new Discretize();
+        discretizeIris.setBins(3);
+        discretizeIris.setAttributeIndices("1-4");
+
+        discretizeIris.setInputFormat(iris);
+
+        Instances irisDiscretized =
+                Filter.useFilter(iris, discretizeIris);
+
+        // Apriori after discretization
+        Apriori apriori2 = new Apriori();
+
+        apriori2.setLowerBoundMinSupport(0.1);
+        apriori2.setMinMetric(0.7);
+        apriori2.setNumRules(10);
+
+        apriori2.buildAssociations(irisDiscretized);
+
+        System.out.println(apriori2);
+
+
+        // ---------------- GLASS DATASET ----------------
+        System.out.println("===== GLASS DATASET =====");
+
+        Instances glass = loadDataset("glass.arff");
+
+        // Resampling
+        Resample resample = new Resample();
+        resample.setSampleSizePercent(50);
+
+        resample.setInputFormat(glass);
+
+        Instances glassResampled =
+                Filter.useFilter(glass, resample);
+
+        // Discretization
+        Discretize discretizeGlass = new Discretize();
+        discretizeGlass.setBins(3);
+
+        discretizeGlass.setInputFormat(glassResampled);
+
+        Instances glassDiscretized =
+                Filter.useFilter(glassResampled, discretizeGlass);
+
+        // Apriori
+        Apriori apriori3 = new Apriori();
+
+        apriori3.setLowerBoundMinSupport(0.1);
+        apriori3.setMinMetric(0.7);
+        apriori3.setNumRules(10);
+
+        apriori3.buildAssociations(glassDiscretized);
+
+        System.out.println(apriori3);
+    }
+
+
+    // Method to load dataset
+    public static Instances loadDataset(String fileName)
+            throws Exception {
+
+        DataSource source = new DataSource(fileName);
+
+        Instances data = source.getDataSet();
+
+        return data;
+    }
+}
